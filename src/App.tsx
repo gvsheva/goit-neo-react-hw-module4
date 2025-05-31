@@ -1,46 +1,36 @@
-import { useEffect, useId, useState } from "react";
-import { useDebounce, useLocalStorage, useSearchParam } from "react-use";
-import { useAccessKey } from "./context/AccessKey";
+import { useEffect, useState } from "react";
 import { useImageSearchAPI } from "./context/ImageSearchAPI";
-import qs from "query-string";
 import css from "./App.module.css";
 import type { ImageSearchItem } from "./model";
 import ImageGallery from "./components/ImageGallery";
 import ImageModal from "./components/ImageModal";
-import LoadMoreBtn from "./components/LoadMoreButton";
+import LoadMoreBtn from "./components/LoadMoreBtn";
 import Loader from "./components/Loader";
-import Search from "./components/Search";
 import ErrorMessage from "./components/ErrorMessage";
+import SearchBar from "./components/SearchBar";
 
 function App() {
   const [items, setItems] = useState<ImageSearchItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const [page, setPage] = useState(-1);
-  const [perPage, setPerPage] = useLocalStorage("per-page", 20);
-  const [accessKey, setAccessKey] = useAccessKey();
-  const [query, setQuery] = useState(useSearchParam("q") || "");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [query, setQuery] = useState("");
   const handleSearch = (value: string) => {
+    setPage(0);
+    setItems([]);
     setQuery(value);
+    if (!value.trim()) {
+      setError("The search query cannot be empty.");
+    }
   };
-  useDebounce(
-    () => {
-      setPage(0);
-      setItems([]);
-      setDebouncedQuery(query);
-    },
-    1000,
-    [query],
-  );
   const { searchPhotos } = useImageSearchAPI();
   const doSearchPhotos = async () => {
     try {
       setLoading(true);
       const result = await searchPhotos({
-        query: debouncedQuery,
+        query: query,
         page: page + 1,
-        perPage: perPage || 20,
+        perPage: 20,
       });
       setItems([...items, ...result.items]);
       setPage(page + 1);
@@ -52,21 +42,12 @@ function App() {
   };
   useEffect(() => {
     (async () => {
-      if (!debouncedQuery.trim()) {
+      if (!query.trim()) {
         return;
       }
       await doSearchPhotos();
     })();
-  }, [debouncedQuery]);
-  useEffect(() => {
-    const p = qs.parse(location.search);
-    if (debouncedQuery) {
-      p.q = debouncedQuery;
-    } else {
-      delete p.q;
-    }
-    history.pushState({}, "", location.pathname + "?" + qs.stringify(p));
-  }, [debouncedQuery]);
+  }, [query]);
   const [itemIndex, setItemIndex] = useState(-1);
   const [openModal, setOpenModal] = useState(false);
   const handleItemSelect = ({ index }: { index: number }) => {
@@ -77,34 +58,10 @@ function App() {
     setItemIndex(-1);
     setOpenModal(false);
   };
-  const accessKeyFID = useId();
-  const perPageFID = useId();
   return (
     <div className={css.app}>
       <header>
-        <div className={css.topbar}>
-          <Search value={query} onChange={handleSearch} />
-          <label htmlFor={perPageFID}>Per page:</label>
-          <input
-            id={perPageFID}
-            type="number"
-            min="10"
-            max="50"
-            value={perPage}
-            onChange={({ currentTarget }) =>
-              setPerPage(parseInt(currentTarget.value))
-            }
-            className={css.perPage}
-          />
-          <label htmlFor={accessKeyFID}>Access Key:</label>
-          <input
-            id={accessKeyFID}
-            type="text"
-            value={accessKey}
-            onChange={({ currentTarget }) => setAccessKey(currentTarget.value)}
-            className={css.accesskey}
-          />
-        </div>
+        <SearchBar onSearch={handleSearch} />
       </header>
       <main>
         <ImageGallery items={items} onSelect={handleItemSelect} />

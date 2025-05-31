@@ -1,7 +1,6 @@
 import { createContext, useContext, type ReactNode } from "react";
-import { useLocalStorage, useSearchParam } from "react-use";
 
-const context = createContext<[string, (k: string) => void]>(["", () => {}]);
+const context = createContext<string>("");
 
 export const useAccessKey = () => useContext(context);
 
@@ -10,13 +9,6 @@ export default function AccessKeyProvider({
 }: {
   children: ReactNode;
 }) {
-  const [accessKey, setAccessKey] = useLocalStorage<string>(
-    "access-key",
-    useSearchParam("k") || "",
-  );
-  return (
-    <context.Provider value={[accessKey || "", setAccessKey]}>
-      {children}
-    </context.Provider>
-  );
+  const accessKey = import.meta.env.VITE_ACCESS_KEY;
+  return <context.Provider value={accessKey}>{children}</context.Provider>;
 }

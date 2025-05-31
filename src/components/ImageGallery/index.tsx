@@ -1,21 +1,6 @@
 import type { ImageSearchItem } from "../../model";
+import ImageCard from "../ImageCard";
 import css from "./ImageGallery.module.css";
-
-function ImageCard({
-  item,
-  onClick,
-}: {
-  item: ImageSearchItem;
-  onClick: () => void;
-}) {
-  return (
-    <div className={css.card}>
-      <a onClick={onClick}>
-        <img src={item.urls.thumbnail} alt={item.description} />
-      </a>
-    </div>
-  );
-}
 
 interface ImageGalleryProps {
   items: ImageSearchItem[];

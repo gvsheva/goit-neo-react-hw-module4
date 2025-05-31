@@ -36,7 +36,7 @@ export default function ImageSearchAPIProvider({
 }: {
   children: ReactNode;
 }) {
-  const [accessKey] = useAccessKey();
+  const accessKey = useAccessKey();
   const { get } = useMemo(() => {
     return axios.create({
       baseURL: "https://api.unsplash.com",
